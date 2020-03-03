@@ -50,6 +50,25 @@ router.post("/users/logoutAll", auth, async (req, res) => {
     res.status(500).send();
   }
 });
+//multer for file uploads
+
+const multer = require("multer");
+const upload = multer({
+  dest: 'avatars',
+  limits:{
+    fileSize:1000000
+  },
+  fileFilter(req,file,cb){
+    if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){
+      return cb(new Error("Please upload an image"))
+    }
+    return cb(undefined,true)
+  }
+})
+router.post('/users/me/avatar',upload.single('avatar'),(req,res)=>{
+
+  res.status(200).send();
+})
 
 router.get("/users/me", auth, async (req, res) => {
   res.send(req.user);
@@ -101,5 +120,7 @@ router.delete("/users/me",auth, async (req, res) => {
     res.status(500).send();
   }
 });
+
+
 
 module.exports = router;
