@@ -54,7 +54,6 @@ router.post("/users/logoutAll", auth, async (req, res) => {
 
 const multer = require("multer");
 const upload = multer({
-  dest: 'avatars',
   limits:{
     fileSize:1000000
   },
@@ -65,8 +64,9 @@ const upload = multer({
     return cb(undefined,true)
   }
 })
-router.post('/users/me/avatar',upload.single('avatar'),(req,res)=>{
-
+router.post('/users/me/avatar',auth,upload.single('avatar'),async (req,res)=>{
+  req.user.avatar = req.file.buffer
+  await req.user.save()
   res.status(200).send();
 },
 (error,req,res,next)=>{
@@ -93,6 +93,20 @@ router.get("/users/:id", async (req, res) => {
   }
 });
 
+router.get("/users/:id/avatar",async (req,res)=>{
+  try{
+    const user = await User.findById(req.params.id)
+    if(!user){
+      throw new Error()
+    }
+    res.set('Content-Type','image/jpg');
+    res.send(user.avatar)
+
+  }catch(e){
+    res.status(404).send()
+  }
+})
+
 router.patch("/users/me",auth, async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["name", "email", "password", "age"];
@@ -115,6 +129,12 @@ router.patch("/users/me",auth, async (req, res) => {
   }
 });
 
+router.delete("/users/me/avatar",auth,async (req,res)=>{
+    req.user.avatar= undefined;
+    await req.user.save()
+    res.status(200).send();
+})
+
 router.delete("/users/me",auth, async (req, res) => {
   try {
       req.user.remove();
@@ -123,6 +143,7 @@ router.delete("/users/me",auth, async (req, res) => {
     res.status(500).send();
   }
 });
+
 
 
 
