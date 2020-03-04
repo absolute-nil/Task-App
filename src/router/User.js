@@ -2,6 +2,7 @@ const express = require("express");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const sharp = require("sharp")
+const {sendWelcomeEmail, sendExitEmail}= require("../emails/account")
 const router = new express.Router();
 
 router.post("/users", async (req, res) => {
@@ -9,6 +10,7 @@ router.post("/users", async (req, res) => {
 
   try {
     await user.save();
+    sendWelcomeEmail(user.email,user.name)
     const token = await user.generateAuthToken();
     res.status(201).send({ user, token });
   } catch (e) {
@@ -140,7 +142,8 @@ router.delete("/users/me/avatar",auth,async (req,res)=>{
 
 router.delete("/users/me",auth, async (req, res) => {
   try {
-      req.user.remove();
+      await req.user.remove();
+      sendExitEmail(req.user.email,req.user.name)
     res.send(req.user);
   } catch (e) {
     res.status(500).send();
